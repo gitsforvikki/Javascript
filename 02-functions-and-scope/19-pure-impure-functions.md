@@ -112,6 +112,167 @@ console.log(user.name); // Kumar
 
 The function changed data outside its own local state.
 
+### Why Does the Original Object Change?
+
+The important idea is the difference between **the object itself** and **the reference pointing to the object**.
+
+Consider:
+
+```js
+const user = {
+  name: "Vikash",
+};
+```
+
+Conceptually, the variable `user` holds a reference that lets JavaScript access the object:
+
+```text
+user
+ │
+ │ reference
+ ▼
+┌─────────────────┐
+│ name: "Vikash"  │
+└─────────────────┘
+```
+
+Now look at the function call:
+
+```js
+function updateUser(person) {
+  person.name = "Kumar";
+}
+
+const user = {
+  name: "Vikash",
+};
+
+updateUser(user);
+```
+
+JavaScript is **pass-by-value**. This means the value stored in `user` is copied and given to the parameter `person`.
+
+For an object, that copied value is a **reference to the object**.
+
+So both variables point to the same object:
+
+```text
+user ─────────┐
+              │
+              ▼
+         ┌─────────────────┐
+         │ name: "Vikash"  │
+         └─────────────────┘
+              ▲
+              │
+person ───────┘
+```
+
+Therefore:
+
+```js
+person.name = "Kumar";
+```
+
+mutates the same object that `user` refers to:
+
+```text
+user ─────────┐
+              │
+              ▼
+         ┌────────────────┐
+         │ name: "Kumar"  │
+         └────────────────┘
+              ▲
+              │
+person ───────┘
+```
+
+That is why:
+
+```js
+console.log(user.name); // Kumar
+```
+
+### Proof That JavaScript Is Still Pass-by-Value
+
+Now consider reassignment instead of mutation:
+
+```js
+function updateUser(person) {
+  person = {
+    name: "Rahul",
+  };
+}
+
+const user = {
+  name: "Vikash",
+};
+
+updateUser(user);
+
+console.log(user);
+```
+
+Output:
+
+```js
+{ name: "Vikash" }
+```
+
+Why did `user` not become `{ name: "Rahul" }`?
+
+Because `person` received a **copy of the reference**, not the original `user` variable.
+
+Initially:
+
+```text
+user ───────┐
+            ▼
+       Object A
+       { name: "Vikash" }
+            ▲
+person ─────┘
+```
+
+After:
+
+```js
+person = {
+  name: "Rahul",
+};
+```
+
+only the local parameter `person` points to a new object:
+
+```text
+user ──────────► Object A
+                 { name: "Vikash" }
+
+person ─────────► Object B
+                  { name: "Rahul" }
+```
+
+The original `user` variable still points to Object A.
+
+### Easy Rule to Remember
+
+```text
+Primitive value:
+copy the primitive value
+
+Object:
+copy the reference value
+        ↓
+both references initially point to the same object
+        ↓
+mutating the object can be seen through both references
+```
+
+A common shortcut is to say that objects are "passed by reference", but the technically accurate explanation is:
+
+> **JavaScript always passes arguments by value. For objects, that value is a reference to the object.**
+
 ## Pure Immutable Version
 
 ```js
